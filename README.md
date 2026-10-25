@@ -11,8 +11,8 @@ It reads the credit-alert email the bank already sends the merchant and checks t
 | Piece | State |
 |---|---|
 | DKIM verifier (`src/dkim.js`) | Done. Full-body signatures only (`l=` rejected), `From` must be signed |
-| Bank allow-list (`src/banks.js`) | OPay (`opay-nigeria.com`), validated on a real OPay email |
-| OPay parser (`src/parsers/opay.js`) | Debit format confirmed; credit format provisional until a real sample |
+| Bank allow-list (`src/banks.js`) | Wema/ALAT (`wemabank.com`): real credit + debit alerts verified. OPay (`opay-nigeria.com`): real debit alerts verified, but OPay doesn't seem to email credits |
+| Parsers (`src/parsers/`) | Wema credit/debit confirmed (payer from Description). OPay debit confirmed; credit provisional |
 | Matcher (`src/matcher.js`) | LANDED / WAITING / MISMATCH (amount, name) / REJECT (alert reused) |
 | Telegram bot, inbox, receipts | Next |
 

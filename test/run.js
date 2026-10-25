@@ -9,7 +9,7 @@ const { decide } = require('../src/matcher');
 const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
 const pub = publicKey.export({ type: 'spki', format: 'der' }).toString('base64');
 const resolver = async (name, type) => {
-  if (type === 'TXT' && name === 'test._domainkey.opay-nigeria.com') return [[`v=DKIM1; k=rsa; p=${pub}`]];
+  if (type === 'TXT' && (name === 'test._domainkey.opay-nigeria.com' || name === 'test._domainkey.wemabank.com')) return [[`v=DKIM1; k=rsa; p=${pub}`]];
   const e = new Error('nx'); e.code = 'ENOTFOUND'; throw e;
 };
 const pem = privateKey.export({ type: 'pkcs8', format: 'pem' });
@@ -54,6 +54,23 @@ t('debit email is not a credit', async () => {
   const a = await readAlert(await sign(opayEmail({ credit: false, subject: 'Transfer Successful' })), { resolver });
   assert.strictEqual(a.direction, 'debit');
   assert.strictEqual(decide({ amountKobo: 48000000, payerName: 'Chidi Okafor' }, [a]).verdict, 'WAITING');
+});
+
+function wemaEmail({ amount = '20,000.00', payer = 'RUTH D DANIEL', ref = 'S12345678' } = {}) {
+  const body = `<p>We wish to inform you that a Credit transaction recently occurred on your bank account.</p><p>Transaction Details - Credit</p><p>Account Number</p><p>:</p><p>0123****02</p><p>Description</p><p>:</p><p>NIP:${payer}-transfer to merchant</p><p>Reference Number</p><p>:</p><p>${ref}</p><p>Transaction Amount</p><p>:</p><p>${amount} NGN</p><p>Transaction Date & Time:</p><p>:</p><p>11-10-2026 18:08:36</p>`;
+  return Buffer.from(['From: Wema Alert <wemaalert@wemabank.com>', 'To: m@example.com', 'Subject: Your WEMA Account Has Been Credited',
+    'Date: Sun, 11 Oct 2026 17:08:14 +0000', `Message-ID: <${ref}@wemabank.com>`, 'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=utf-8', '', body, ''].join('\r\n'));
+}
+t('valid signed Wema credit parses payer from Description', async () => {
+  const a = await readAlert(await sign(wemaEmail(), 'wemabank.com'), { resolver });
+  assert.strictEqual(a.ok, true, JSON.stringify(a));
+  assert.deepStrictEqual([a.bank, a.direction, a.amountKobo, a.counterpartyName, a.txnRef], ['wema', 'credit', 2000000, 'RUTH D DANIEL', 'S12345678']);
+  assert.strictEqual(decide({ amountKobo: 2000000, payerName: 'Ruth Daniel' }, [a]).verdict, 'LANDED');
+});
+t('Wema-signed email claiming to be OPay -> UNSUPPORTED_SENDER', async () => {
+  const a = await readAlert(await sign(opayEmail({}), 'wemabank.com'), { resolver });
+  assert.strictEqual(a.code, 'UNSUPPORTED_SENDER');
 });
 
 const alert = { ok: true, direction: 'credit', amountKobo: 48000000, counterpartyName: 'CHIDI OKAFOR', txnRef: 'R1' };

@@ -10,7 +10,7 @@ function htmlToText(html) {
     .split('\n').map((l) => l.trim()).filter(Boolean).join('\n');
 }
 function parseNaira(s) {
-  const m = String(s).match(/(?:₦|NGN|N)\s?([\d,]+(?:\.\d{1,2})?)/i);
+  const m = String(s).match(/(?:₦|NGN|N)\s?([\d,]+(?:\.\d{1,2})?)/i) || String(s).match(/([\d,]+\.\d{2})\s*(?:NGN|₦)/i);
   if (!m) return null;
   return Math.round(parseFloat(m[1].replace(/,/g, '')) * 100); // kobo
 }
@@ -19,7 +19,12 @@ function field(text, labelRe) {
   const lines = text.split('\n');
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i].match(new RegExp('^\\s*(?:' + labelRe + ')\\s*[:：]?\\s*(.*)$', 'i'));
-    if (m) return (m[1] && m[1].trim()) || (lines[i + 1] || '').trim();
+    if (m) {
+      let v = (m[1] || '').replace(/^[:：\s]+/, '').trim();
+      let j = i + 1;
+      while (!v && j < lines.length && j <= i + 3) { v = lines[j].replace(/^[:：\s]+/, '').trim(); j++; }
+      return v || null;
+    }
   }
   return null;
 }

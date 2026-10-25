@@ -7,7 +7,14 @@ const BANKS = [
     dkimDomains: ['opay-nigeria.com'],
     fromDomains: ['opay-nigeria.com'],
     parser: require('./parsers/opay'),
-    validated: '2026-10-25 (debit email; credit format pending)',
+    validated: '2026-10-25 (debit only; 240+ debit emails, NO credit emails seen: OPay may not email credits)',
+  },
+  {
+    id: 'wema', name: 'Wema Bank / ALAT',
+    dkimDomains: ['wemabank.com'],
+    fromDomains: ['wemabank.com'],
+    parser: require('./parsers/wema'),
+    validated: '2026-10-25 (real credit + debit alerts, d=wemabank.com via Brevo)',
   },
 ];
 
