@@ -7,6 +7,7 @@ const BANKS = [
     dkimDomains: ['opay-nigeria.com'],
     fromDomains: ['opay-nigeria.com'],
     parser: require('./parsers/opay'),
+    creditSearch: 'from:opay-nigeria.com -subject:("Transfer Successful" OR "Payment Successful" OR "Enable Merchant" OR cashback OR discount)',
     validated: '2026-10-25 (debit only; 240+ debit emails, NO credit emails seen: OPay may not email credits)',
   },
   {
@@ -14,6 +15,7 @@ const BANKS = [
     dkimDomains: ['wemabank.com'],
     fromDomains: ['wemabank.com'],
     parser: require('./parsers/wema'),
+    creditSearch: 'from:wemabank.com subject:credited',
     validated: '2026-10-25 (real credit + debit alerts, d=wemabank.com via Brevo)',
   },
 ];
@@ -23,4 +25,8 @@ function bankFor(fromDomain, validDomains) {
     && b.dkimDomains.some((d) => validDomains.includes(d))) || null;
 }
 
-module.exports = { BANKS, bankFor };
+function allowedSenderQuery() {
+  // Gmail search is only a pre-filter; DKIM + parser decide what counts.
+  return '(' + BANKS.map((b) => '(' + (b.creditSearch || b.fromDomains.map((d) => 'from:' + d).join(' OR ')) + ')').join(' OR ') + ')';
+}
+module.exports = { allowedSenderQuery, BANKS, bankFor };
