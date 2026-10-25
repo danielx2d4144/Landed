@@ -1,0 +1,19 @@
+{
+  "name": "landed",
+  "version": "1.0.0",
+  "description": "Landed: check that a naira payment really landed, using the bank's own DKIM-signed alert email.",
+  "main": "src/alert.js",
+  "scripts": {
+    "test": "node test/run.js",
+    "verify-eml": "node scripts/verify-eml.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "mailauth": "^8.0.4",
+    "mailparser": "^3.12.4"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
+}
